@@ -30,7 +30,7 @@ jobs:
       - name: Generate native Android project
         run: |
           rm -rf /tmp/NetworkAndroid
-          npx @react-native-community/cli@20.1.0 init NetworkAndroid \
+          npx --no-install @react-native-community/cli init NetworkAndroid \
             --version 0.86.3 \
             --directory /tmp/NetworkAndroid \
             --title Networkkapp \
@@ -39,6 +39,11 @@ jobs:
             --pm npm
           rm -rf android
           cp -R /tmp/NetworkAndroid/android ./android
+
+      - name: Validate React Native config
+        run: |
+          npx --no-install @react-native-community/cli config > /tmp/react-native-config.json
+          node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync('/tmp/react-native-config.json','utf8')); const a=c.project && c.project.android; if(!a || a.packageName!=='com.tekou8.networkkapp'){ console.error(JSON.stringify(c.project,null,2)); process.exit(1); } console.log('Android packageName:', a.packageName); console.log('Android sourceDir:', a.sourceDir);"
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
