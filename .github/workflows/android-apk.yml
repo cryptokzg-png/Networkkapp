@@ -1,0 +1,56 @@
+name: Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    name: Build native Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install JavaScript dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Generate native Android project
+        run: |
+          rm -rf /tmp/NetworkAndroid
+          npx @react-native-community/cli@20.1.0 init NetworkAndroid \
+            --version 0.86.3 \
+            --directory /tmp/NetworkAndroid \
+            --title Networkkapp \
+            --package-name com.tekou8.networkkapp \
+            --skip-install \
+            --pm npm
+          rm -rf android
+          cp -R /tmp/NetworkAndroid/android ./android
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build release APK
+        working-directory: android
+        timeout-minutes: 15
+        run: ./gradlew assembleRelease --no-daemon --stacktrace --warning-mode all
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Networkkapp-release-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
