@@ -21,6 +21,7 @@
     "react-native-worklets": "0.10.1"
   },
   "devDependencies": {
+    "@react-native-community/cli": "^20.2.0",
     "@react-native/babel-preset": "0.86.3",
     "@react-native/metro-config": "0.86.3",
     "@react-native/typescript-config": "0.86.3",
