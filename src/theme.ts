@@ -1,0 +1,31 @@
+export const colors = {
+  bg: '#0B0D17',
+  surface: '#141829',
+  surfaceLight: '#1A1F35',
+  surfaceBorder: '#1F2544',
+  text: '#FFFFFF',
+  textSec: '#8B8FA3',
+  textMuted: '#5A5F73',
+  accent: '#7C5CFC',
+  accentSoft: 'rgba(124,92,252,0.15)',
+  accentBorder: 'rgba(124,92,252,0.2)',
+  green: '#10B981',
+  greenSoft: 'rgba(16,185,129,0.12)',
+  red: '#EF4444',
+  redSoft: 'rgba(239,68,68,0.12)',
+  amber: '#F59E0B',
+  amberSoft: 'rgba(245,158,11,0.12)',
+  blue: '#3B82F6',
+  blueSoft: 'rgba(59,130,246,0.12)',
+  cyan: '#0EA5E9',
+  cyanSoft: 'rgba(14,165,233,0.12)',
+};
+
+export const radii = {
+  sm: 6,
+  md: 12,
+  lg: 14,
+  xl: 18,
+  xxl: 20,
+  pill: 99,
+};
