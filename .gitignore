@@ -1,0 +1,8 @@
+node_modules/
+android/
+ios/
+.gradle/
+*.apk
+*.aab
+*.hprof
+.metro-health-check*
