@@ -1,0 +1,81 @@
+name: Android Runtime Smoke Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    name: Launch APK in Android emulator
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install JavaScript dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Generate native Android project
+        run: |
+          rm -rf /tmp/NetworkAndroid
+          npx --no-install @react-native-community/cli init NetworkAndroid \
+            --version 0.86.3 \
+            --directory /tmp/NetworkAndroid \
+            --title Networkkapp \
+            --package-name com.tekou8.networkkapp \
+            --skip-install \
+            --pm npm
+          rm -rf android
+          cp -R /tmp/NetworkAndroid/android ./android
+
+      - name: Build debug APK for emulator
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon --stacktrace -PreactNativeArchitectures=x86_64
+
+      - name: Run app and capture crash log
+        uses: reactivecircus/android-emulator-runner@v2.38.0
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          emulator-boot-timeout: 300
+          emulator-options: -no-window -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: |
+            set +e
+            adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+            adb logcat -c
+            adb shell am force-stop com.tekou8.networkkapp
+            adb shell monkey -p com.tekou8.networkkapp 1
+            sleep 8
+            adb shell pidof com.tekou8.networkkapp > /tmp/app_pid.txt
+            adb logcat -d -v threadtime > /tmp/logcat.txt
+            echo '=== APP PID ==='
+            cat /tmp/app_pid.txt
+            echo '=== CRASH SIGNALS ==='
+            grep -E 'FATAL EXCEPTION|AndroidRuntime|ReactNativeJS|ReactNative|Reanimated|Worklets|SIGSEGV|Fatal signal|SurfaceMountingManager|SoLoader' /tmp/logcat.txt | tail -n 250
+            if [ ! -s /tmp/app_pid.txt ]; then
+              echo 'APP_EXITED_AFTER_LAUNCH=1' >> "$GITHUB_ENV"
+              exit 1
+            fi
+            echo 'APP_EXITED_AFTER_LAUNCH=0' >> "$GITHUB_ENV"
+
+      - name: Upload logcat
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Networkkapp-runtime-logcat
+          path: /tmp/logcat.txt
+          if-no-files-found: ignore
