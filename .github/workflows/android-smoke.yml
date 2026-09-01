@@ -2,6 +2,8 @@ name: Android Runtime Smoke Test
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
 
 jobs:
   smoke:
