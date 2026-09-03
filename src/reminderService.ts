@@ -1,5 +1,6 @@
 import {AppState, type AppStateStatus} from 'react-native';
 import {Contact, loadContacts, saveContacts, loadTelegramSettings} from './storage';
+import {sendPushNotification} from './pushNotification';
 
 let intervalId: ReturnType<typeof setInterval> | null = null;
 let appStateSubscription: {remove: () => void} | null = null;
@@ -9,7 +10,6 @@ async function sendTelegramReminder(contact: Contact, token: string, chatId: str
     const body: any = {
       chat_id: chatId,
       text: `🔔 Hatırlatma: ${contact.name}${contact.company ? ` (${contact.company})` : ''}\n📅 Takip: ${contact.followUpDate}\n${contact.note ? `📝 ${contact.note}` : ''}`,
-      parse_mode: 'HTML',
     };
     if (topicId) body.message_thread_id = topicId;
     const r = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
@@ -24,10 +24,27 @@ async function sendTelegramReminder(contact: Contact, token: string, chatId: str
   }
 }
 
+async function sendReminder(contact: Contact, telegram: {token: string; chatId: string; topicId: string; connected: boolean}): Promise<boolean> {
+  const channel = contact.reminderChannel ?? 'telegram';
+  const title = `🔔 ${contact.name}`;
+  const body = `${contact.company ? contact.company + ' · ' : ''}Takip: ${contact.followUpDate}`;
+
+  let telegramOk = true;
+  let pushOk = true;
+
+  if ((channel === 'telegram' || channel === 'both') && telegram.connected) {
+    telegramOk = await sendTelegramReminder(contact, telegram.token, telegram.chatId, telegram.topicId);
+  }
+
+  if (channel === 'push' || channel === 'both') {
+    pushOk = await sendPushNotification(title, body);
+  }
+
+  return telegramOk || pushOk;
+}
+
 export async function checkAndSendReminders(): Promise<number> {
   const telegram = await loadTelegramSettings();
-  if (!telegram.connected || !telegram.token || !telegram.chatId) return 0;
-
   const contacts = await loadContacts();
   const now = Date.now();
   let sentCount = 0;
@@ -45,7 +62,7 @@ export async function checkAndSendReminders(): Promise<number> {
     const reminderTime = followUpTime - reminderMinutes * 60 * 1000;
 
     if (now >= reminderTime) {
-      const sent = await sendTelegramReminder(contact, telegram.token, telegram.chatId, telegram.topicId);
+      const sent = await sendReminder(contact, telegram);
       if (sent) {
         contact.reminderSentAt = new Date().toISOString();
         changed = true;
