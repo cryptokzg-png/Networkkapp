@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type Interaction={id:string;type:string;note:string;date:string};
-export type Contact={id:string;name:string;company:string;role:string;roles?:string[];topics?:string[];networkType?:string;tags?:string[];phone:string;email:string;telegram:string;twitter:string;website:string;tag:string;note:string;followUpDate?:string;reminderMinutes?:number;reminderChannel?:'telegram'|'push'|'both'|'none';interactions?:Interaction[]};
+export type Contact={id:string;name:string;company:string;role:string;roles?:string[];topics?:string[];networkType?:string;tags?:string[];phone:string;email:string;telegram:string;twitter:string;website:string;tag:string;note:string;followUpDate?:string;reminderMinutes?:number;reminderChannel?:'telegram'|'push'|'both'|'none';reminderSentAt?:string;interactions?:Interaction[]};
 export type TelegramSettings={token:string;chatId:string;topicId:string;connected:boolean};
 const KEY='network_contacts_v1';
 const TELEGRAM_KEY='network_telegram_v1';
